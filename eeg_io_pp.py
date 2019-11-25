@@ -304,20 +304,19 @@ def process_data_2a(data, label, window_size, num_channels=22):
 
 
 def segment_signal_without_transition(data, label, window_size, overlap=1):
-
+    # # # Divides signal and labels into segments of time. May be overlapping.
+    # # # Ensures there is one label for each segment of 
+    # Returns: segments, labels
+    
     for (start, end) in windows(data, window_size, overlap=overlap):
         if len(data[start:end]) == window_size:
             x1_F = data[start:end]
             if start == 0:
-                # unique, counts = np.unique(label[start:end], return_counts=True)
-                # labels = unique[np.argmax(counts)]    # mode label
-                labels = label[end]     # end label
+                labels = label[end]
                 segments = x1_F
             else:
                 try:
-                    # unique, counts = np.unique(label[start:end], return_counts=True)
-                    # labels = np.append(labels, unique[np.argmax(counts)])     # mode label
-                    labels = np.append(labels, label[end])     # end label
+                    labels = np.append(labels, label[end])
                     segments = np.vstack([segments, x1_F])
                 except ValueError:
                     continue
@@ -326,6 +325,10 @@ def segment_signal_without_transition(data, label, window_size, overlap=1):
 
 
 def windows(data, size, overlap=1):
+    # # # Returns the integer values that will serve as each beginning and ending indice
+    # # # for the windows of data
+    # Returns (yields): beginning, end for each window
+    
     start = 0
     while (start + size) < data.shape[0]:
         yield int(start), int(start + size)
@@ -333,7 +336,10 @@ def windows(data, size, overlap=1):
 
 
 def split_data(data_in_s, label_s, split_val=0.666):
-    # the first 2 trials are in training, last is testing (0.666)
+    # # # Splits data and labels by a given split_val, with a split_val proportion of 
+    # # # the data in the training set, and a (1 - split_val) proportion for the testing or validation set.
+    # Returns: training and test sets, and labels
+    
     split = int(split_val * len(label_s))
     train_x = data_in_s[0:split]
     train_y = label_s[0:split]
@@ -364,10 +370,12 @@ def norm_dataset(dataset_1D):
 
 
 def feature_normalize(data):
-    # print(data)
+    # # # Z-normalises one segment of data (timepoints, channels) by its entire mean and 
+    # # # standard deviation
+    # Returns: normalised data of the same shape as the input
+    
     mean = data.mean()
     sigma = data.std()
-    # print("Mean: {}      Std: {}".format(mean, sigma))
     data_normalized = data
     data_normalized = (data_normalized - mean) / sigma
     data_normalized = (data_normalized - np.min(data_normalized))/np.ptp(data_normalized)
@@ -376,7 +384,9 @@ def feature_normalize(data):
 
 
 def data_aug(data, labels, size, reuse_data, mult_data, noise_data, neg_data, freq_mod_data):
-    print('Before Data Augmentation: ', data.shape)
+    # # # Augments data based on boolean inputs reuse_data, noise_data, neg_data, freq_mod data.
+    # Returns: entire training dataset after data augmentation, and the cooresponding labels
+    
     n_channels = data.shape[2]
     data_out = data
     labels_out = labels
@@ -402,12 +412,12 @@ def data_aug(data, labels, size, reuse_data, mult_data, noise_data, neg_data, fr
         data_out = np.concatenate([data_out, freq_data_add], axis=0)
         labels_out = np.append(labels_out, np.asarray(labels_freq))
 
-    print('After Data Augmentation: ', data_out.shape)
-
     return data_out, labels_out
 
 
 def data_reuse_f(data, labels, size, n_channels=22):
+    # Returns: data double the size of the input over time, repeating the input data
+    
     new_data = []
     new_labels = []
     for i in range(len(labels)):
@@ -421,6 +431,9 @@ def data_reuse_f(data, labels, size, n_channels=22):
 
 
 def data_neg_f(data, labels, size, n_channels=22):
+    # Returns: data double the size of the input over time, with new data
+    # being a reflection along the amplitude 
+    
     new_data = []
     new_labels = []
     for i in range(len(labels)):
