@@ -86,8 +86,6 @@ def label_data_2a(signal, time, events, remove_rest, n_classes, freq):
             t = t+1
             if t == len(events):
                 signal_out = signal_out[:len(final_labels)]
-                print("Signal out shape: ", signal_out.shape)
-                print("Length of Labels: ", len(final_labels))
                 return signal_out, np.asarray(final_labels)
 
         if events[t, 0] + freq/2 < time[j] < events[t, 0] + freq * (5/2):
@@ -128,13 +126,9 @@ def label_data_2a(signal, time, events, remove_rest, n_classes, freq):
 
         if t == len(events):
             signal_out = signal_out[:len(final_labels)]
-            print("Signal out shape: ", signal_out.shape)
-            print("Length of Labels: ", len(final_labels))
             return signal_out, np.asarray(final_labels)
 
     signal_out = signal_out[:len(final_labels)]
-    print("Signal out shape: ", signal_out.shape)
-    print("Length of Labels: ", len(final_labels))
 
     return np.asarray(signal_out), np.asarray(final_labels)
 
@@ -167,14 +161,9 @@ def label_data_2a_train(signal, time, events, freq, da_mod=1, reuse_data=False, 
             if t == len(events):
                 signal_out = signal_out[:len(final_labels)]
                 num_to_add = check_train_set(final_labels, cc_labels, num_da_mod*da_mod)
-                print("num_to_add: ", num_to_add)
                 if num_to_add > 0:
-                    print(first_j - num_to_add)
-                    print(signal[first_j - num_to_add:first_j].shape)
                     np.concatenate([signal[first_j - num_to_add:first_j], signal_out])
                     np.concatenate([np.zeros(num_to_add), np.asarray(final_labels)])
-                print("Signal out shape: ", signal_out.shape)
-                print("Length of Labels: ", len(final_labels))
                 return signal_out, np.asarray(final_labels)
 
         if events[t, 0] + freq/2 < time[j] < events[t, 0] + freq * (5/2):
@@ -182,7 +171,6 @@ def label_data_2a_train(signal, time, events, freq, da_mod=1, reuse_data=False, 
             signal_out[j1] = signal[j]
             if j1 == 0:
                 first_j = j
-                print("First J: ", first_j)
             j1 += 1
             cc_labels += 1
         elif time[j] >= events[t, 0] + freq * 4:
@@ -206,26 +194,16 @@ def label_data_2a_train(signal, time, events, freq, da_mod=1, reuse_data=False, 
         if t == len(events):
             signal_out = signal_out[:len(final_labels)]
             num_to_add = check_train_set(final_labels, cc_labels, num_da_mod*da_mod)
-            print("num_to_add: ", num_to_add)
             if num_to_add > 0:
-                print(first_j - num_to_add)
-                print(signal[first_j - num_to_add:first_j].shape)
                 np.concatenate([signal[first_j-num_to_add:first_j], signal_out])
                 np.concatenate([np.zeros(num_to_add), np.asarray(final_labels)])
-            print("Signal out shape: ", signal_out.shape)
-            print("Length of Labels: ", len(final_labels))
             return signal_out, np.asarray(final_labels)
 
     signal_out = signal_out[:len(final_labels)]
     num_to_add = check_train_set(final_labels, cc_labels, num_da_mod*da_mod)
-    print("num_to_add: ", num_to_add)
     if num_to_add > 0:
-        print(first_j - num_to_add)
-        print(signal[first_j - num_to_add:first_j].shape)
         np.concatenate([signal[first_j - num_to_add:first_j], signal_out])
         np.concatenate([np.zeros(num_to_add), np.asarray(final_labels)])
-    print("Signal out shape: ", signal_out.shape)
-    print("Length of Labels: ", len(final_labels))
 
     return np.asarray(signal_out), np.asarray(final_labels)
 
@@ -247,8 +225,6 @@ def label_data_2a_val(signal, time, events, freq, remove_rest=False):
             t += 1
             if t == len(events):
                 signal_out = signal_out[:len(final_labels)]
-                print("Signal out shape: ", signal_out.shape)
-                print("Length of Labels: ", len(final_labels))
                 return signal_out, np.asarray(final_labels)
 
         # if events[t, 0] + freq/2 < time[j] < events[t, 0] + freq * (5/2):
@@ -280,13 +256,8 @@ def label_data_2a_val(signal, time, events, freq, remove_rest=False):
             final_labels.append(0)
 
         if t == len(events):
-            print("Signal out shape: ", signal_out.shape)
-            print("Length of Labels: ", len(final_labels))
             signal_out = signal_out[:len(final_labels)]
             return signal_out, np.asarray(final_labels)
-
-    print("Signal out shape: ", signal_out.shape)
-    print("Length of Labels: ", len(final_labels))
 
     return signal_out, np.asarray(final_labels)
 
@@ -349,18 +320,6 @@ def split_data(data_in_s, label_s, split_val=0.666):
 
     return train_x, test_x, train_y, test_y
 
-# def butter_bandpass(lowcut, highcut, fs, order=5):
-#     nyq = 0.5 * fs
-#     low = lowcut / nyq
-#     high = highcut / nyq
-#     b, a = butter(order, [low, high], btype='band')
-#     return b, a
-#
-#
-# def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
-#     b, a = butter_bandpass(lowcut, highcut, fs, order=order)
-#     y = lfilter(b, a, data)
-#     return y
 
 def norm_dataset(dataset_1D):
     norm_dataset_1D = np.zeros(dataset_1D.shape)
