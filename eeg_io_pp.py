@@ -9,7 +9,10 @@ from time import clock
 
 
 def get_data_2a(data_name, n_classes, num_channels=22):
-
+    # # # Reads in raw edf (or gdf) file from BCI Competition 2a and returns the signal, time array,  
+    # # # and start of each (labeled) motor imagery event
+    # Returns: signal, time array, events
+    
     freq = 250
 
     raw = read_raw_edf(data_name, preload=True, stim_channel='auto', verbose='WARNING')
@@ -65,6 +68,9 @@ def get_label_data_2a(data_name, n_classes, num_channels=22, remove_rest=True, t
 
 
 def label_data_2a(signal, time, events, remove_rest, n_classes, freq):
+    # # # Gets desired signal and matching labels for each time point
+    # Returns: signal, labels 
+    
     final_labels = []
     signal_out = np.zeros(signal.shape)
     t, s, j1 = 0, 0, 0
@@ -134,6 +140,11 @@ def label_data_2a(signal, time, events, remove_rest, n_classes, freq):
 
 
 def label_data_2a_train(signal, time, events, freq, da_mod=1, reuse_data=False, mult_data=False, noise_data=False, neg_data=False, freq_mod_data=False):
+    # # # Gets and labels desired signal
+    # # # Counts how much rest data is required to maintain the 
+    # # # proper balance (based on da_mod, and any data augmentation methods requested)
+    # Returns: desired signal, corresponding labels
+    
     final_labels = []
     signal_out = np.zeros(signal.shape)
     t, s, j1 = 0, 0, 0
@@ -151,13 +162,16 @@ def label_data_2a_train(signal, time, events, freq, da_mod=1, reuse_data=False, 
 
     min_event = 769
     max_event = 772
-    cc_labels = 0
-    # first_j = 0
+    cc_labels = 0           # cc_labels counts how many times "control classes" (non resting classes) have been detected in the signal
 
     # 0 - rest; 1 - left; 2 - right; 3 - foot; 4 - tongue
     for j in range(len(time)):
+        
+        # This while loop ignores all events that are not motor imagery events
+        # Motor imagery events have all been labelled with numbers 769-772
         while events[t, 1] < min_event or events[t, 1] > max_event:
             t = t+1
+            # Formats and returns signal if all events have been considered
             if t == len(events):
                 signal_out = signal_out[:len(final_labels)]
                 num_to_add = check_train_set(final_labels, cc_labels, num_da_mod*da_mod)
@@ -166,6 +180,9 @@ def label_data_2a_train(signal, time, events, freq, da_mod=1, reuse_data=False, 
                     np.concatenate([np.zeros(num_to_add), np.asarray(final_labels)])
                 return signal_out, np.asarray(final_labels)
 
+        # Adds MI signal/label only if it is between 0.5 and 2.5 seconds after the start of the event
+        # This is done to remove unwanted Visually Evoked Potential (< 0.5s)
+        # And to remove MI data that has "tapered off" in strength (> 2.5s)
         if events[t, 0] + freq/2 < time[j] < events[t, 0] + freq * (5/2):
             final_labels.append(events[t, 1] - 768)
             signal_out[j1] = signal[j]
@@ -173,6 +190,7 @@ def label_data_2a_train(signal, time, events, freq, da_mod=1, reuse_data=False, 
                 first_j = j
             j1 += 1
             cc_labels += 1
+        # If the time is more than 4 seconds after the event began, the event number and time are incremented
         elif time[j] >= events[t, 0] + freq * 4:
             final_labels.append(events[t, 1] - 768)
             signal_out[j1] = signal[j]
@@ -183,6 +201,8 @@ def label_data_2a_train(signal, time, events, freq, da_mod=1, reuse_data=False, 
         elif events[t, 0] + freq * (5/2) < time[j] < events[t, 0] + freq * 4:
             continue
         else:
+            # "Resting" signal is added if it hasn't been overexpressed relative to the control classes
+            # This is where counting cc_labels comes into play, and the data skew value (da_mod)
             if s < int(num_da_mod*da_mod*(cc_labels / 4)):
                 final_labels.append(0)
                 signal_out[j1] = signal[j]
@@ -190,7 +210,8 @@ def label_data_2a_train(signal, time, events, freq, da_mod=1, reuse_data=False, 
                 j1 += 1
             else:
                 continue
-
+    
+        # Formats and returns signal if all events have been considered
         if t == len(events):
             signal_out = signal_out[:len(final_labels)]
             num_to_add = check_train_set(final_labels, cc_labels, num_da_mod*da_mod)
@@ -199,6 +220,7 @@ def label_data_2a_train(signal, time, events, freq, da_mod=1, reuse_data=False, 
                 np.concatenate([np.zeros(num_to_add), np.asarray(final_labels)])
             return signal_out, np.asarray(final_labels)
 
+    # Formats and returns signal
     signal_out = signal_out[:len(final_labels)]
     num_to_add = check_train_set(final_labels, cc_labels, num_da_mod*da_mod)
     if num_to_add > 0:
@@ -209,6 +231,11 @@ def label_data_2a_train(signal, time, events, freq, da_mod=1, reuse_data=False, 
 
 
 def label_data_2a_val(signal, time, events, freq, remove_rest=False):
+    # # # Gets entire signal and labels it, unless requested to remove "resting" data
+    # # # Labels control class data differently from the above function: 0.5s-4s are all considered
+    # # # as "control class" data. Data augmentation is not considered, as it isn't performed on test data
+    # Returns: signal, labels
+    
     final_labels = []
     t, s, j1 = 0, 0, 0
 
@@ -263,7 +290,10 @@ def label_data_2a_val(signal, time, events, freq, remove_rest=False):
 
 
 def process_data_2a(data, label, window_size, num_channels=22):
-
+    # # # Takes as input a full signal with full labels
+    # # # Segments both into windows, normalizes the signal, then formats and splits it
+    # Returns: train_data, test_data, train_y, test_y as the segmented and normalized training and testing data and labels
+    
     data, label = segment_signal_without_transition(data, label, window_size)
     unique, counts = np.unique(label, return_counts=True)
     data = norm_dataset(data)
@@ -276,7 +306,7 @@ def process_data_2a(data, label, window_size, num_channels=22):
 
 def segment_signal_without_transition(data, label, window_size, overlap=1):
     # # # Divides signal and labels into segments of time. May be overlapping.
-    # # # Ensures there is one label for each segment of 
+    # # # Ensures there is one label for each segment of window_size
     # Returns: segments, labels
     
     for (start, end) in windows(data, window_size, overlap=overlap):
@@ -321,11 +351,13 @@ def split_data(data_in_s, label_s, split_val=0.666):
     return train_x, test_x, train_y, test_y
 
 
-def norm_dataset(dataset_1D):
-    norm_dataset_1D = np.zeros(dataset_1D.shape)
-    for i in range(dataset_1D.shape[0]):
-        norm_dataset_1D[i] = feature_normalize(dataset_1D[i])
-    return norm_dataset_1D
+def norm_dataset(dataset):
+    # # # Normailizes the entire dataset
+    # Returns: normalised dataset
+    norm_dataset = np.zeros(dataset.shape)
+    for i in range(dataset.shape[0]):
+        norm_dataset[i] = feature_normalize(dataset_1D[i])
+    return norm_dataset
 
 
 def feature_normalize(data):
