@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 
 
 def get_clf(clf_method):
+    # Set classification method and return the classifier/model and optimizer, if applicable
+    
     if clf_method == "Riemann":
         fgda = pyriemann.tangentspace.FGDA()
         mdm = pyriemann.classification.MDM()
@@ -33,9 +35,12 @@ def get_clf(clf_method):
 
 
 def transform_fit(clf, opt, train_data, train_labels, test_data, test_labels):
+    # Train the classifier based using training data and labels
+    # Test the model using test data
+    # Returns the trained model and the accuracy
+    
     if clf_method == "Riemann":
         cov_train = pyriemann.estimation.Covariances().fit_transform(np.transpose(train_data, axes=[0, 2, 1]))
-        # clf.fit_transform(cov_train, train_labels)
         clf.fit(cov_train, train_labels)
         return clf, False
     elif clf_method == "Braindecode":
@@ -62,8 +67,8 @@ def transform_fit(clf, opt, train_data, train_labels, test_data, test_labels):
 
 
 def predict(clf, val_data, labels):
-    print('val_data shape:')
-    print(val_data.shape)
+    # Trained classifier makes a prediction on incoming values, and returns the prediction
+    
     if clf_method == "Riemann":
         cov_val = pyriemann.estimation.Covariances().fit_transform(np.transpose(val_data, axes=[0, 2, 1]))
         pred_val = clf.predict(cov_val)
@@ -267,17 +272,12 @@ if __name__ == '__main__':
                             clf, acc_out = transform_fit(clf, opt, data_train, label_train, data_val, label_val)
                             pred_val = predict(clf, data_val, label_val)
 
-                            # print('label_val shape: ', label_val.shape)
-                            # print('pred_val shape: ', np.asarray(pred_val).shape)
-
                             conf_mat = confusion_matrix(label_val, pred_val)
 
                             if subject_num == 1:
                                 conf_mat_f = conf_mat
-                                # acc_out_f = acc_out
                             else:
                                 conf_mat_f = conf_mat_f + conf_mat
-                                # acc_out_f = acc_out_f + acc_out
 
                             print("# # # # # # # # # # # # # # # # # # # # # # #")
                             print(" ")
@@ -339,7 +339,6 @@ if __name__ == '__main__':
                             print("Data Aug Mod: {}".format(da_mod))
                             print("Window Size: {}".format(window_size))
                             print("Overlap: {}".format(overlap))
-                            # print("Classes: {}".format(n_classes))
                             print("Subject: {}".format(subject_num))
                             print("Mult: {}".format(mult_data))
                             print("Noise: {}".format(noise_data))
