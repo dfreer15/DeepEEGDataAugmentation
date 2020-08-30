@@ -234,16 +234,6 @@ def fit_transform_val(model, optimizer, X, y, num_epochs=20, n_channels=22, inpu
 
 def fit_transform_2(model, optimizer, train_data, y_train, test_data, y_test, num_epochs=20, n_channels=22, input_time_length=500):
 
-    print('train_data shape: ', train_data.shape)
-    print('train_label shape: ', y_train.shape)
-    print('test_data shape: ', test_data.shape)
-    print('test_label shape: ', y_test.shape)
-
-    # n_classes = 4
-    # if n_classes == 4:
-    #     y_train = y_train - 1
-    #     y_test = y_test - 1
-
     train_set = SignalAndTarget(train_data, y=y_train)
     test_set = SignalAndTarget(test_data, y=y_test)
 
@@ -255,7 +245,6 @@ def fit_transform_2(model, optimizer, train_data, y_train, test_data, y_test, nu
         test_input = test_input.cuda()
     out = model(test_input)
     n_preds_per_input = out.cpu().data.numpy().shape[2]
-    # print("{:d} predictions per input/trial".format(n_preds_per_input))
 
     iterator = CropsFromTrialsIterator(batch_size=32, input_time_length=input_time_length,
                                        n_preds_per_input=n_preds_per_input)
@@ -334,10 +323,6 @@ def fit_transform_2(model, optimizer, train_data, y_train, test_data, y_test, nu
 
 
 def predict(model, data, labels, n_channels=22, input_time_length=500):
-
-    # n_classes = 4
-    # if n_classes == 4:
-    #     labels = labels - 1
 
     # # # # # # # # CREATE CROPPED ITERATOR # # # # # # # # #
     val_set = SignalAndTarget(data, y=labels)
@@ -457,8 +442,6 @@ if __name__ == '__main__':
         # Pytorch expects float32 for input and int64 for labels.
         X = (data * 1e6).astype(np.float32)
         y = (label - 1).astype(np.int64)
-
-        # print(X)
 
         X = np.transpose(X, [0, 2, 1])
 
