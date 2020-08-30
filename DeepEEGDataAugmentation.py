@@ -22,7 +22,6 @@ def get_clf(clf_method):
         fgda = pyriemann.tangentspace.FGDA()
         mdm = pyriemann.classification.MDM()
         clf = Pipeline([('FGDA', fgda), ('MDM', mdm)])
-        # clf = pyriemann.classification.TSclassifier()
         return clf, False
     elif clf_method == "Braindecode":
         model = Deep_Func.create_model(n_classes, freq*window_size, in_chans=num_channels)
